@@ -1,0 +1,98 @@
+package com.xrotune.app.data.repo
+
+import com.xrotune.app.data.api.ApiConfig
+import com.xrotune.app.data.api.InnerTubeClient
+import com.xrotune.app.data.api.ResponseParser
+import com.xrotune.app.data.model.MusicSection
+import com.xrotune.app.data.model.PlayableMedia
+import com.xrotune.app.data.model.Track
+import kotlinx.coroutines.Dispatchers
+import kotlinx.coroutines.withContext
+import org.json.JSONObject
+
+/**
+ * Music operations built on the InnerTube RPCs.
+ *
+ * `authHeader` is an optional `Authorization: Bearer <token>` value. It is
+ * attached when the user signed in with Google, which is what lets the server
+ * return account-scoped data (library, subscriptions) instead of a public feed.
+ */
+class MusicRepository(
+    private val client: InnerTubeClient = InnerTubeClient(),
+) {
+
+    @Volatile
+    var authHeader: String? = null
+
+    private fun headers(): Map<String, String> =
+        authHeader?.let { mapOf("Authorization" to it) } ?: emptyMap()
+
+    private fun context(): JSONObject = ApiConfig.clientContext(client.visitorData)
+
+    /**
+     * The signed-in home feed is personalised. For guests it returns only
+     * browse-only rows (albums, artists, podcasts), so `FEmusic_explore` is
+     * used instead — it yields playable tracks and videos.
+     */
+    suspend fun getHome(): List<MusicSection> = withContext(Dispatchers.Default) {
+        val browseId = if (authHeader != null) "FEmusic_home" else "FEmusic_explore"
+        val body = JSONObject()
+            .put("context", context())
+            .put("browseId", browseId)
+        val response = client.post("browse", body, headers())
+        ResponseParser.parseSections(response)
+    }
+
+    suspend fun getLibrary(): List<MusicSection> = withContext(Dispatchers.Default) {
+        val body = JSONObject()
+            .put("context", context())
+            .put("browseId", "FEmusic_library_landing")
+        val response = client.post("browse", body, headers())
+        ResponseParser.parseSections(response)
+    }
+
+    suspend fun search(
+        query: String,
+        filter: ApiConfig.SearchFilter = ApiConfig.SearchFilter.VIDEOS,
+    ): List<Track> = withContext(Dispatchers.Default) {
+        val body = JSONObject()
+            .put("context", context())
+            .put("query", query)
+        if (filter.params.isNotEmpty()) body.put("params", filter.params)
+        val response = client.post("search", body, headers())
+        ResponseParser.parseTracks(response)
+    }
+
+    suspend fun suggestions(input: String): List<String> = withContext(Dispatchers.Default) {
+        if (input.isBlank()) return@withContext emptyList()
+        val body = JSONObject()
+            .put("context", context())
+            .put("input", input)
+        runCatching {
+            val response = client.post("music/get_search_suggestions", body, headers())
+            com.xrotune.app.util.Json
+                .findAll(response) { it.has("searchSuggestionsSectionRenderer") }
+                .flatMap { section ->
+                    com.xrotune.app.util.Json
+                        .findAll(section) { it.has("suggestionRenderer") }
+                        .mapNotNull { it.optJSONObject("suggestionRenderer") }
+                        .mapNotNull { com.xrotune.app.util.Json.runsText(it.optJSONObject("suggestion")) }
+                }
+        }.getOrDefault(emptyList())
+    }
+
+    /**
+     * Resolves a playable stream. The server gates this endpoint behind
+     * account verification, so [PlaybackUnavailableException] is a normal,
+     * expected outcome that the UI must surface rather than a crash.
+     */
+    suspend fun resolveMedia(videoId: String): PlayableMedia = withContext(Dispatchers.Default) {
+        val body = JSONObject()
+            .put("context", context())
+            .put("videoId", videoId)
+            .put("contentCheckOk", true)
+            .put("racyCheckOk", true)
+        val response = client.post("player", body, headers())
+        ResponseParser.parsePlayable(response, videoId)
+    }
+}

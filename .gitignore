@@ -1,0 +1,22 @@
+# Build outputs
+build/
+XroTune/build/
+XroTune/app/build/
+XroTune/.gradle/
+XroTune/local.properties
+.gradle/
+local.properties
+
+# Local tooling / scratch
+tools/
+*.log
+
+# YouTube Music APK analysis: contains Google's proprietary APK and
+# decompiled sources, and is far too large to redistribute. Kept local only.
+ytmusic-apk/
+ytmusic-mirror/
+
+# IDE / OS
+.idea/
+*.iml
+.DS_Store

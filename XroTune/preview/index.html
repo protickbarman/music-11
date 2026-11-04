@@ -1,0 +1,210 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>XroTune — Preview</title>
+<style>
+  :root{
+    --bg:#0E0B14; --surface:#17131F; --surfaceVariant:#241E33;
+    --primary:#B388FF; --onPrimary:#1A1030; --primaryContainer:#3A2A5C;
+    --secondary:#FF6E9C; --onBg:#EDE7F6; --onSurfaceVariant:#CAC4D0;
+    --outline:#4A4458; --error:#FFB4AB;
+  }
+  *{box-sizing:border-box}
+  body{margin:0;background:#08060C;color:var(--onBg);
+    font-family:"Roboto","Segoe UI",system-ui,sans-serif;padding:32px 16px 64px}
+  h1{font-size:22px;font-weight:700;text-align:center;margin:0 0 4px}
+  .sub{text-align:center;color:var(--onSurfaceVariant);font-size:13px;margin-bottom:28px}
+  .rail{display:flex;gap:28px;overflow-x:auto;padding:8px 8px 24px;justify-content:center;flex-wrap:wrap}
+  .phone{flex:0 0 auto}
+  .cap{text-align:center;font-size:12px;color:var(--onSurfaceVariant);margin-top:10px;letter-spacing:.3px}
+  .device{width:300px;height:620px;background:var(--bg);border-radius:34px;
+    border:8px solid #05040A;box-shadow:0 18px 50px rgba(0,0,0,.6);
+    overflow:hidden;display:flex;flex-direction:column;position:relative}
+  .statusbar{height:22px;display:flex;align-items:center;justify-content:space-between;
+    padding:0 14px;font-size:10px;color:var(--onSurfaceVariant);flex:0 0 auto}
+  .body{flex:1;overflow:hidden;display:flex;flex-direction:column}
+  .navbar{flex:0 0 auto;display:flex;border-top:1px solid var(--outline);background:var(--surface)}
+  .navbar div{flex:1;text-align:center;padding:7px 0 9px;font-size:9.5px;color:var(--onSurfaceVariant)}
+  .navbar div.on{color:var(--primary)}
+  .navbar .ic{font-size:15px;display:block;line-height:1.25}
+  .np{flex:0 0 auto;display:flex;align-items:center;gap:10px;background:var(--surfaceVariant);
+    padding:7px 12px;cursor:pointer}
+  .art{width:40px;height:40px;border-radius:6px;flex:0 0 auto;
+    background:linear-gradient(135deg,#6750A4,#B388FF);display:flex;align-items:center;
+    justify-content:center;font-size:15px}
+  .np .t{font-size:11px;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+  .np .s{font-size:9.5px;color:var(--onSurfaceVariant);white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+  .np .btn{margin-left:auto;font-size:17px;color:var(--onBg)}
+  .scroll{flex:1;overflow-y:auto;padding-bottom:6px}
+  .scroll::-webkit-scrollbar{width:0}
+  .sect{padding:9px 0 3px}
+  .sect h3{font-size:12.5px;font-weight:600;margin:0 0 8px;padding:0 16px}
+  .row{display:flex;gap:12px;padding:0 16px;overflow-x:auto}
+  .row::-webkit-scrollbar{height:0}
+  .card{flex:0 0 auto;width:104px}
+  .card .thumb{width:104px;height:104px;border-radius:8px;position:relative;
+    display:flex;align-items:center;justify-content:center;font-size:26px;color:rgba(255,255,255,.85)}
+  .card .ti{font-size:11px;margin-top:6px;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+  .card .si{font-size:9.5px;color:var(--onSurfaceVariant);white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+  .badge{position:absolute;right:5px;bottom:5px;background:rgba(0,0,0,.75);color:#fff;
+    font-size:8.5px;padding:1px 4px;border-radius:3px}
+  .searchbar{margin:12px 16px;display:flex;align-items:center;gap:8px;border:1px solid var(--outline);
+    border-radius:10px;padding:9px 12px;color:var(--onSurfaceVariant);font-size:12px}
+  .track{display:flex;align-items:center;gap:12px;padding:8px 16px}
+  .track .thumb{width:46px;height:46px;border-radius:6px;flex:0 0 auto;display:flex;
+    align-items:center;justify-content:center;font-size:17px;color:rgba(255,255,255,.85)}
+  .track .ti{font-size:11.5px;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+  .track .si{font-size:9.5px;color:var(--onSurfaceVariant);white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+  .signin{flex:1;display:flex;flex-direction:column;align-items:center;justify-content:center;padding:0 32px;text-align:center}
+  .logo{width:88px;height:88px;border-radius:26px;background:var(--primaryContainer);
+    display:flex;align-items:center;justify-content:center;font-size:44px;color:var(--primary)}
+  .signin h2{font-size:22px;margin:20px 0 8px}
+  .signin p{font-size:12px;color:var(--onSurfaceVariant);margin:0 0 26px;line-height:1.5}
+  .gbtn{width:100%;background:var(--primary);color:var(--onPrimary);border-radius:22px;
+    padding:13px 0;font-size:12.5px;font-weight:600}
+  .skip{margin-top:10px;font-size:11.5px;color:var(--primary)}
+  .player{flex:1;display:flex;flex-direction:column;padding:0 20px 22px}
+  .phead{display:flex;align-items:center;padding:8px 0}
+  .phead .bk{font-size:19px;color:var(--onBg)}
+  .cover{width:100%;aspect-ratio:1;border-radius:14px;margin:14px 0 22px;
+    background:linear-gradient(135deg,#6750A4,#B388FF 60%,#FF6E9C);
+    display:flex;align-items:center;justify-content:center;font-size:64px;color:rgba(255,255,255,.9)}
+  .ptitle{font-size:16px;font-weight:600;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+  .partist{font-size:11.5px;color:var(--onSurfaceVariant);margin-top:3px;white-space:nowrap;
+    overflow:hidden;text-overflow:ellipsis}
+  .slider{margin-top:16px}
+  .bar{height:3px;border-radius:2px;background:var(--outline);position:relative}
+  .bar .fill{position:absolute;left:0;top:0;bottom:0;width:38%;background:var(--primary);border-radius:2px}
+  .bar .knob{position:absolute;left:38%;top:50%;width:11px;height:11px;margin:-5.5px 0 0 -5.5px;
+    border-radius:50%;background:var(--primary)}
+  .times{display:flex;justify-content:space-between;font-size:9.5px;color:var(--onSurfaceVariant);margin-top:7px}
+  .pctl{display:flex;align-items:center;justify-content:center;margin-top:24px}
+  .play{width:64px;height:64px;border-radius:50%;background:var(--primary);color:var(--onPrimary);
+    display:flex;align-items:center;justify-content:center;font-size:28px}
+  .err{margin:10px 16px;padding:10px 12px;border-radius:8px;background:rgba(255,180,171,.12);
+    color:var(--error);font-size:10.5px;line-height:1.45}
+  .empty{flex:1;display:flex;align-items:center;justify-content:center;
+    color:var(--onSurfaceVariant);font-size:12px;text-align:center;padding:0 40px}
+  .t1{background:linear-gradient(135deg,#3A2A5C,#6750A4)}
+  .t2{background:linear-gradient(135deg,#B3265F,#FF6E9C)}
+  .t3{background:linear-gradient(135deg,#1F4B5C,#4FA3B8)}
+  .t4{background:linear-gradient(135deg,#5C3A1F,#C98A4B)}
+  .t5{background:linear-gradient(135deg,#2A5C3A,#5FB57A)}
+</style>
+</head>
+<body>
+<h1>XroTune</h1>
+<div class="sub">Android app preview &middot; com.xrotune.app &middot; Jetpack Compose &amp; Material 3 &middot; debug APK builds clean</div>
+<div class="rail" id="rail"></div>
+
+<script>
+const PHONES = [
+{cap:"Sign in", html:`
+ <div class="signin">
+   <div class="logo">&#9835;</div>
+   <h2>XroTune</h2>
+   <p>Sign in with Google to load your library, playlists and recommendations.</p>
+   <div class="gbtn">Sign in with Google</div>
+   <div class="skip">Continue without signing in</div>
+ </div>`},
+
+{cap:"Home &mdash; explore feed", np:["Blinding Lights","The Weeknd &#183; 200M views","&#10074;&#10074;"], tab:0, html:`
+ <div class="sect">
+   <h3>New music videos</h3>
+   <div class="row">
+     ${card("t1","&#9835;","Shape of You","Ed Sheeran")}
+     ${card("t2","&#9835;","Blinding Lights","The Weeknd")}
+     ${card("t3","&#9835;","Levitating","Dua Lipa")}
+   </div>
+ </div>
+ <div class="sect">
+   <h3>Trending</h3>
+   <div class="row">
+     ${card("t4","&#9835;","Save Your Tears","The Weeknd")}
+     ${card("t5","&#9835;","Peaches","Justin Bieber")}
+     ${card("t1","&#9835;","Montero","Lil Nas X")}
+   </div>
+ </div>`},
+
+{cap:"Search", tab:1, html:`
+ <div class="searchbar"><span>&#128269;</span><span>shape of you</span></div>
+ ${track("t1","&#9835;","Shape of You","Ed Sheeran &#183; 6.1B views")}
+ ${track("t2","&#9835;","Shape of You (Lyrics)","7clouds &#183; 210M views")}
+ ${track("t3","&#9835;","Shape of You (Official Video)","Ed Sheeran &#183; 6.0B views")}
+ ${track("t4","&#9835;","Shape of You (Acoustic)","Ed Sheeran &#183; 42M views")}
+ ${track("t5","&#9835;","Shape of You (Cover)","J.Fla &#183; 88M views")}`},
+
+{cap:"Library &mdash; signed in", tab:2, html:`
+ <div class="sect">
+   <h3>Liked music</h3>
+   <div class="row">
+     ${card("t2","&#9829;","Blinding Lights","The Weeknd")}
+     ${card("t1","&#9829;","As It Was","Harry Styles")}
+     ${card("t3","&#9829;","Stay","Kid LAROI")}
+   </div>
+ </div>
+ <div class="sect">
+   <h3>Your playlists</h3>
+   <div class="row">
+     ${card("t4","&#9835;","Late Night Drive","28 songs")}
+     ${card("t5","&#9835;","Focus Flow","51 songs")}
+     ${card("t1","&#9835;","Throwbacks","19 songs")}
+   </div>
+ </div>`},
+
+{cap:"Now playing", np:["Blinding Lights","The Weeknd &#183; 200M views","&#10074;&#10074;"], tab:0, html:`
+ <div class="player">
+   <div class="phead"><span class="bk">&#8592;</span></div>
+   <div class="cover">&#9835;</div>
+   <div class="ptitle">Blinding Lights</div>
+   <div class="partist">The Weeknd &#183; After Hours</div>
+   <div class="slider">
+     <div class="bar"><div class="fill"></div><div class="knob"></div></div>
+     <div class="times"><span>1:12</span><span>3:20</span></div>
+   </div>
+   <div class="pctl"><div class="play">&#10074;&#10074;</div></div>
+ </div>`},
+
+{cap:"Playback unavailable (live API)", tab:1, html:`
+ <div class="searchbar"><span>&#128269;</span><span>blinding lights</span></div>
+ <div class="err">This track can&#39;t be played right now. Google may require an additional verification step.</div>
+ ${track("t2","&#9835;","Blinding Lights","The Weeknd &#183; 200M views")}
+ ${track("t3","&#9835;","BLINDING LIGHTS","The Weeknd &#183; 88M views")}
+ ${track("t4","&#9835;","Blinding Lights (Remix)","Various &#183; 12M views")}`},
+];
+
+function card(c,i,title,sub){
+  return `<div class="card"><div class="thumb ${c}">${i}</div>
+    <div class="ti">${title}</div><div class="si">${sub}</div></div>`;
+}
+function track(c,i,title,sub){
+  return `<div class="track"><div class="thumb ${c}">${i}</div>
+    <div style="min-width:0;flex:1"><div class="ti">${title}</div><div class="si">${sub}</div></div></div>`;
+}
+function navbar(on){
+  const items=[["&#127968;","Home"],["&#128269;","Search"],["&#9835;","Library"]];
+  return `<div class="navbar">${items.map((it,k)=>
+    `<div class="${k===on?'on':''}"><span class="ic">${it[0]}</span>${it[1]}</div>`).join("")}</div>`;
+}
+function npbar(d){
+  return `<div class="np"><div class="art">&#9835;</div>
+    <div style="min-width:0;flex:1"><div class="t">${d[0]}</div><div class="s">${d[1]}</div></div>
+    <div class="btn">${d[2]}</div></div>`;
+}
+document.getElementById('rail').innerHTML = PHONES.map(p=>`
+  <div class="phone">
+    <div class="device">
+      <div class="statusbar"><span>9:41</span><span>&#9679;&#9679;&#9679; &#9650; 100%</span></div>
+      <div class="body">
+        ${p.html}
+        ${p.np?npbar(p.np):""}
+        ${p.tab!==undefined?navbar(p.tab):""}
+      </div>
+    </div>
+    <div class="cap">${p.cap}</div>
+  </div>`).join("");
+</script>
+</body>
+</html>

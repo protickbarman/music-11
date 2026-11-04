@@ -1,0 +1,7 @@
+<?xml version="1.0" encoding="utf-8"?>
+<resources>
+    <color name="xro_background">#FF0E0B14</color>
+    <color name="xro_surface">#FF17131F</color>
+    <color name="xro_accent">#FFB388FF</color>
+    <color name="xro_accent_alt">#FFFF6E9C</color>
+</resources>
