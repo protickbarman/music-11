@@ -1,23 +1,34 @@
 # Build outputs
 build/
-XroTune/build/
-XroTune/app/build/
-XroTune/.gradle/
-XroTune/local.properties
+app/build/
 .gradle/
+.kotlin/
 local.properties
+*.apk
+*.aab
+*.ap_
+*.dex
+*.class
 
-# Local tooling / scratch
-tools/
-*.log
+# Signing material — never commit
+*.jks
+*.keystore
+keystore.properties
+signing.properties
 
-# APK analysis: contains Google's proprietary APKs and decompiled
-# sources, and is far too large to redistribute. Kept local only.
-ytmusic-apk/
-ytmusic-mirror/
-youtube-apk/
+# Secrets / local config
+secrets.properties
+.env
+.env.*
 
 # IDE / OS
 .idea/
 *.iml
+.vscode/
 .DS_Store
+Thumbs.db
+
+# Logs / scratch
+*.log
+captures/
+.navigation/
