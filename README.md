@@ -79,10 +79,14 @@ As a result, tapping a track surfaces "This track can't be played right now."
 `ResponseParser.parsePlayable` turns the refusal into a `PlaybackUnavailableException`
 and the UI reports it, so the app degrades cleanly instead of crashing or hanging.
 
-Making playback work requires either an authenticated, visitor-attested session, or
-resolving the stream from the `youtube.com/watch` page (which does return
-`PLAYABLE` and `streamingData`), including the signature and `n`-parameter
-deciphering the web player uses.
+Making playback work is not a matter of fixing the request shape. The real
+YouTube app gates media on device attestation (DroidGuard) and per-session PO
+tokens, and now delivers audio over SABR rather than as downloadable URLs — the
+watch page returns no `url` and no `signatureCipher` on its audio formats at all,
+only `serverAbrStreamingUrl`. See
+[`ANALYSIS-youtube-guest.md`](ANALYSIS-youtube-guest.md) for the decompiled
+evidence. The practical next step is to re-test with an authenticated session
+from the Gmail sign-in flow, not to reimplement the gating.
 
 ## Third-party content
 

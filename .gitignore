@@ -11,10 +11,11 @@ local.properties
 tools/
 *.log
 
-# YouTube Music APK analysis: contains Google's proprietary APK and
-# decompiled sources, and is far too large to redistribute. Kept local only.
+# APK analysis: contains Google's proprietary APKs and decompiled
+# sources, and is far too large to redistribute. Kept local only.
 ytmusic-apk/
 ytmusic-mirror/
+youtube-apk/
 
 # IDE / OS
 .idea/
