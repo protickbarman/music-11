@@ -1,0 +1,91 @@
+# XroTune
+
+An Android music client that talks to the YouTube Music InnerTube API, written in
+Kotlin with Jetpack Compose and Material 3.
+
+```
+XroTune/
+├── app/src/main/java/com/xrotune/app/
+│   ├── MainActivity.kt          Navigation, mini-player, tabs
+│   ├── data/api/                InnerTubeClient, ResponseParser, ApiConfig
+│   ├── data/repo/               MusicRepository (search, browse, player)
+│   ├── auth/                    Gmail sign-in + session persistence
+│   ├── player/                  Media3 PlaybackService + controller
+│   └── ui/                      Compose screens, theme, components
+├── app/src/test/                JVM tests against real captured API responses
+└── preview/index.html           Static visual preview of every screen
+```
+
+## Build
+
+Java, Gradle and the Android SDK are not preinstalled on a bare machine.
+
+```bash
+sudo apt-get install -y openjdk-21-jdk
+export JAVA_HOME=/usr/lib/jvm/java-21-openjdk-amd64
+
+# Android SDK command-line tools into /opt/android-sdk, then:
+sudo chown -R "$(whoami)" /opt/android-sdk
+yes | sdkmanager "platform-tools" "platforms;android-35" "build-tools;35.0.0"
+
+cd XroTune
+echo "sdk.dir=/opt/android-sdk" > local.properties
+./gradlew :app:assembleDebug :app:testDebugUnitTest
+```
+
+Output: `app/build/outputs/apk/debug/app-debug.apk` (minSdk 26, targetSdk 35).
+
+A prebuilt debug APK is committed at `XroTune/preview/XroTune-1.0.0-debug.apk`.
+
+## Preview
+
+`XroTune/preview/index.html` is a self-contained visual preview of the sign-in,
+home, search, library, now-playing and error screens. Serve it with any static
+server, e.g. `python3 -m http.server` from that directory.
+
+## Tests
+
+`app/src/test/java/com/xrotune/app/data/api/ResponseParserTest.kt` runs as plain JVM
+tests against responses captured from the live API in `app/src/test/resources/`.
+They fail if the real renderer shape drifts, not merely when the code changes.
+
+On the JVM, `org.json` comes from the `org.json:json` test dependency, because
+`android.jar` stubs those classes out.
+
+## InnerTube notes
+
+The app calls `music.youtube.com/youtubei/v1/*` with the public `WEB_REMIX` key.
+
+**Search and browse work as a guest**, with two caveats that were found by testing
+the live API rather than assuming:
+
+- Search needs the `params` filter. An unfiltered search returns mostly artists,
+  profiles and podcasts, which carry only a `browseEndpoint` and are therefore not
+  playable. `ApiConfig.SearchFilter.VIDEOS` reliably returns 20/20 playable rows.
+- `browseId` matters for guests. `FEmusic_home` returns only browse-only rows for
+  guests, while `FEmusic_explore` and `FEmusic_new_releases` return playable items.
+
+### Playback does not work yet
+
+The `player` endpoint refuses unauthenticated callers. Verified across WEB_REMIX
+(with and without `visitorData` / client headers), ANDROID_MUSIC, IOS_MUSIC, WEB and
+TVHTML5_SIMPLY_EMBEDDED: every request returns `UNPLAYABLE` ("Video unavailable")
+or `LOGIN_REQUIRED` ("Sign in to confirm you're not a bot"), with zero streaming
+formats. The same videos are `PLAYABLE` on the web watch page, so this is
+server-side bot mitigation on the InnerTube player endpoint, not a malformed
+request.
+
+As a result, tapping a track surfaces "This track can't be played right now."
+`ResponseParser.parsePlayable` turns the refusal into a `PlaybackUnavailableException`
+and the UI reports it, so the app degrades cleanly instead of crashing or hanging.
+
+Making playback work requires either an authenticated, visitor-attested session, or
+resolving the stream from the `youtube.com/watch` page (which does return
+`PLAYABLE` and `streamingData`), including the signature and `n`-parameter
+deciphering the web player uses.
+
+## Third-party content
+
+The decompiled YouTube Music APK analysis that informed the request shapes is
+deliberately not committed. It contains Google's proprietary APK and derived
+sources, and is far larger than a source repository should carry.
