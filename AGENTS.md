@@ -6,6 +6,9 @@
 - `YOUTUBE-PLAYER-RESEARCH.md` — how the player works end to end: InnerTube
   request/response, attestation challenge, signed URLs, SABR/UMP, ABR policy.
 - `ANALYSIS-youtube-guest.md` — decompiled evidence for how YouTube gates guests.
+- `CLIENT-NEGOTIATION.md` — why client identity, not version, gates playback, and
+  why the resolver tries identities in order.
+- `ANDROID-TAP-FLOW.md` — the tap-to-playback path through the Kotlin app.
 - `youtube-apk/`, `ytmusic-apk/`, `ytmusic-mirror/` — local APK analysis, git-ignored.
 
 ## Build environment

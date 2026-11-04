@@ -7,7 +7,13 @@ Search and browsing work without signing in. Audio playback does not: the InnerT
 player endpoint gates unauthenticated callers, and that is measured and documented
 below rather than worked around. How the player works end to end — request,
 attestation, signed URLs, SABR/UMP, ABR policy — is in
-[`YOUTUBE-PLAYER-RESEARCH.md`](YOUTUBE-PLAYER-RESEARCH.md).
+[`YOUTUBE-PLAYER-RESEARCH.md`](YOUTUBE-PLAYER-RESEARCH.md). Why the client
+identity, not the version string, is what decides whether media is served is in
+[`CLIENT-NEGOTIATION.md`](CLIENT-NEGOTIATION.md). The app therefore tries several
+identities in order and keeps the first playable response.
+
+What happens on the device after a tap, step by step, is in
+[`ANDROID-TAP-FLOW.md`](ANDROID-TAP-FLOW.md).
 
 ```
 XroTune/
