@@ -158,15 +158,50 @@ supported player) rather than to reimplement the gating.
 
 ## Worked example
 
-A concrete case, `VqgVGkt2YhM`, tested with no cookies and no auth:
+The requester's own link, `https://www.youtube.com/watch?v=VqgVGkt2YhM&list=RDVqgVGkt2YhM&start_radio=1`
+("Bengali LoFi Jukebox - Volume 3", channel SVF Music), tested with no cookies
+and no auth:
 
 | client | result |
 |---|---|
-| ANDROID_VR | `LOGIN_REQUIRED` — "Sign in to confirm you're not a bot" |
 | WEB_REMIX | `LOGIN_REQUIRED` — "Sign in to confirm you're not a bot" |
-| ANDROID_MUSIC | `LOGIN_REQUIRED` — "Please sign in" |
 | WEB | `LOGIN_REQUIRED` — "Sign in to confirm you're not a bot" |
+| MWEB | `LOGIN_REQUIRED` — "Sign in to confirm you're not a bot" |
+| ANDROID_VR | `LOGIN_REQUIRED` — "Sign in to confirm you're not a bot" |
+| ANDROID_MUSIC | `LOGIN_REQUIRED` — "Please sign in" |
+| IOS | HTTP 400 |
+| TVHTML5 | `LOGIN_REQUIRED` — "Sign in to confirm you're not a bot" |
 
-Zero formats returned by every profile. This is the clearest single illustration
-of the gate: the same video that a signed-in user plays normally is refused
-outright for an anonymous caller, regardless of which client shape is presented.
+With playlist context (`playlistId=RDVqgVGkt2YhM`) added, `ANDROID_VR` and
+`WEB_REMIX` still return `LOGIN_REQUIRED`. The watch page itself returns
+`playabilityStatus.status = LOGIN_REQUIRED` with no `videoDetails`, no
+`streamingData` and no `attestation` block.
+
+Zero formats from every path.
+
+### It is not specific to that video, and not a rate limit
+
+A spread of eleven videos in one session, `ANDROID_VR`, no auth:
+
+| videoId | status | audio URLs | title |
+|---|---|---|---|
+| dQw4w9WgXcQ | **OK** | **4** | Rick Astley - Never Gonna Give You Up |
+| kJQP7kiw5Fk | UNPLAYABLE | 0 | Luis Fonsi - Despacito |
+| JGwWNGJdvx8 | LOGIN_REQUIRED | 0 | Ed Sheeran - Shape of You |
+| 9bZkp7q19f0 | LOGIN_REQUIRED | 0 | PSY - Gangnam Style |
+| hT_nvWreIhg | UNPLAYABLE | 0 | OneRepublic - Counting Stars |
+| YQHsXMglC9A | LOGIN_REQUIRED | 0 | Adele - Hello |
+| jNQXAC9IVRw | LOGIN_REQUIRED | 0 | Me at the zoo |
+| aircAruvnKk | LOGIN_REQUIRED | 0 | 3Blue1Brown - neural networks |
+| 8aGhZQkoFbQ | LOGIN_REQUIRED | 0 | JSConf - event loop |
+| arj7oStGLkU | LOGIN_REQUIRED | 0 | TED - procrastination |
+| VqgVGkt2YhM | LOGIN_REQUIRED | 0 | Bengali LoFi Jukebox (the link above) |
+
+One of eleven worked. That one is the single video queried most often during
+testing, so its player response is very likely warm in a cache rather than
+genuinely available. It is not a music-versus-video split (music and non-music
+both fail), not age (a 2005 video fails alongside a 2009 one), and not rate
+limiting (the same video returns the same status on every retry, minutes apart).
+
+The practical conclusion is that guest playback is effectively unavailable, and
+an authenticated session is required.
