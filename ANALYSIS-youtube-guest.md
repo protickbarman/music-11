@@ -155,3 +155,18 @@ authenticated context. If the server accepts it, keep the current plain-HTTP
 player path and drop the guest attempt. If it still demands SABR, then the
 honest options are to use a supported route (official API, or embedding a
 supported player) rather than to reimplement the gating.
+
+## Worked example
+
+A concrete case, `VqgVGkt2YhM`, tested with no cookies and no auth:
+
+| client | result |
+|---|---|
+| ANDROID_VR | `LOGIN_REQUIRED` — "Sign in to confirm you're not a bot" |
+| WEB_REMIX | `LOGIN_REQUIRED` — "Sign in to confirm you're not a bot" |
+| ANDROID_MUSIC | `LOGIN_REQUIRED` — "Please sign in" |
+| WEB | `LOGIN_REQUIRED` — "Sign in to confirm you're not a bot" |
+
+Zero formats returned by every profile. This is the clearest single illustration
+of the gate: the same video that a signed-in user plays normally is refused
+outright for an anonymous caller, regardless of which client shape is presented.

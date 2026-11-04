@@ -1,7 +1,11 @@
 # XroTune
 
-An Android music client that talks to the YouTube Music InnerTube API, written in
-Kotlin with Jetpack Compose and Material 3.
+An Android music client that talks to the YouTube InnerTube API, written in Kotlin
+with Jetpack Compose and Material 3.
+
+Search and browsing work without signing in. Audio playback does not: the InnerTube
+player endpoint gates unauthenticated callers, and that is measured and documented
+below rather than worked around.
 
 ```
 XroTune/
@@ -90,6 +94,6 @@ from the Gmail sign-in flow, not to reimplement the gating.
 
 ## Third-party content
 
-The decompiled YouTube Music APK analysis that informed the request shapes is
+The decompiled YouTube APK analysis that informed the request shapes is
 deliberately not committed. It contains Google's proprietary APK and derived
 sources, and is far larger than a source repository should carry.
