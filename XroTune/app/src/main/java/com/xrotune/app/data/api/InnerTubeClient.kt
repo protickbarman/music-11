@@ -34,14 +34,17 @@ class InnerTubeClient {
         endpoint: String,
         body: JSONObject,
         extraHeaders: Map<String, String> = emptyMap(),
+        baseUrl: String = ApiConfig.BASE_URL,
+        userAgent: String = ApiConfig.USER_AGENT,
+        origin: String = "https://music.youtube.com",
     ): JSONObject = withContext(Dispatchers.IO) {
-        val url = ApiConfig.BASE_URL + endpoint + "?key=" + ApiConfig.API_KEY + "&prettyPrint=false"
+        val url = baseUrl + endpoint + "?key=" + ApiConfig.API_KEY + "&prettyPrint=false"
         val request = Request.Builder()
             .url(url)
             .post(body.toString().toRequestBody(jsonMedia))
             .header("Content-Type", "application/json")
-            .header("User-Agent", ApiConfig.USER_AGENT)
-            .header("Origin", "https://music.youtube.com")
+            .header("User-Agent", userAgent)
+            .header("Origin", origin)
             .header("X-Goog-Api-Format-Version", "2")
             .apply { extraHeaders.forEach { (k, v) -> header(k, v) } }
             .build()

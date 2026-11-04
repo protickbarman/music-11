@@ -3,7 +3,9 @@ package com.xrotune.app.data.repo
 import com.xrotune.app.data.api.ApiConfig
 import com.xrotune.app.data.api.InnerTubeClient
 import com.xrotune.app.data.api.ResponseParser
+import com.xrotune.app.data.model.InnerTubeException
 import com.xrotune.app.data.model.MusicSection
+import com.xrotune.app.data.model.PlaybackUnavailableException
 import com.xrotune.app.data.model.PlayableMedia
 import com.xrotune.app.data.model.Track
 import kotlinx.coroutines.Dispatchers
@@ -85,14 +87,41 @@ class MusicRepository(
      * Resolves a playable stream. The server gates this endpoint behind
      * account verification, so [PlaybackUnavailableException] is a normal,
      * expected outcome that the UI must surface rather than a crash.
+     *
+     * Playback identities are tried in order (see [ApiConfig.PLAYER_CLIENTS])
+     * and the first that returns a playable stream wins. If every one refuses,
+     * the last refusal is thrown so the message reflects the server's verdict.
      */
     suspend fun resolveMedia(videoId: String): PlayableMedia = withContext(Dispatchers.Default) {
-        val body = JSONObject()
-            .put("context", context())
-            .put("videoId", videoId)
-            .put("contentCheckOk", true)
-            .put("racyCheckOk", true)
-        val response = client.post("player", body, headers())
-        ResponseParser.parsePlayable(response, videoId)
+        var lastFailure: PlaybackUnavailableException? = null
+        for (client in ApiConfig.PLAYER_CLIENTS) {
+            val body = JSONObject()
+                .put("context", ApiConfig.clientContext(client, this@MusicRepository.client.visitorData))
+                .put("videoId", videoId)
+                .put("contentCheckOk", true)
+                .put("racyCheckOk", true)
+            val response = try {
+                this@MusicRepository.client.post(
+                    "player",
+                    body,
+                    headers(),
+                    baseUrl = client.baseUrl,
+                    userAgent = client.userAgent,
+                    origin = client.origin,
+                )
+            } catch (e: InnerTubeException) {
+                // A transport-level refusal for one identity should not abort
+                // the whole resolution; try the next one.
+                lastFailure = PlaybackUnavailableException("ERROR", e.message)
+                continue
+            }
+            try {
+                return@withContext ResponseParser.parsePlayable(response, videoId)
+            } catch (e: PlaybackUnavailableException) {
+                lastFailure = e
+            }
+        }
+        throw lastFailure
+            ?: PlaybackUnavailableException("ERROR", "No client returned a playable stream")
     }
 }
