@@ -203,5 +203,66 @@ genuinely available. It is not a music-versus-video split (music and non-music
 both fail), not age (a 2005 video fails alongside a 2009 one), and not rate
 limiting (the same video returns the same status on every retry, minutes apart).
 
-The practical conclusion is that guest playback is effectively unavailable, and
+### Decisive test: video ID, all clients, all techniques
+
+Run with the video ID directly, `dQw4w9WgXcQ`, no auth.
+
+**Every client profile:**
+
+| client | status | formats | audio URLs |
+|---|---|---|---|
+| WEB | UNPLAYABLE | 0 | 0 |
+| WEB_REMIX | UNPLAYABLE | 0 | 0 |
+| MWEB | UNPLAYABLE | 0 | 0 |
+| WEB_EMBEDDED_PLAYER | ERROR | 0 | 0 |
+| TVHTML5 | UNPLAYABLE | 0 | 0 |
+| TVHTML5_SIMPLY_EMBEDDED_PLAYER | ERROR | 0 | 0 |
+| ANDROID | HTTP 400 | — | — |
+| ANDROID_MUSIC | LOGIN_REQUIRED | 0 | 0 |
+| IOS | HTTP 400 | — | — |
+| IOS_MUSIC | LOGIN_REQUIRED | 0 | 0 |
+| ANDROID_TESTSUITE | UNPLAYABLE | 0 | 0 |
+| **ANDROID_VR** | **OK** | **27** | **4** |
+
+On the `ANDROID_VR` result: no `signatureCipher` on any format, so nothing needs
+deciphering. An `attestation` block is present
+(`playerAttestationRenderer.challenge`, `d=28&e=dQw4w9WgXcQ`), and
+`serverAbrStreamingUrl` is present too. The audio URLs are real: an HTTP Range
+request returns `206` with `65536` bytes of valid WebM (`1a45dfa3`).
+
+**Every technique:**
+
+| technique | result |
+|---|---|
+| fresh `visitorData` from `/visitor_id`, added to context | ANDROID_VR still OK, WEB_REMIX and WEB still UNPLAYABLE |
+| `X-YouTube-Client-Name` / `X-YouTube-Client-Version` headers | no change |
+| alternate endpoints (`player`, `next`, `get_video_info`) | `get_video_info` is 404; the others carry no media |
+| embed page `youtube.com/embed/ID` | no `ytInitialPlayerResponse` |
+| `contentCheckOk` / `racyCheckOk` omitted | no change |
+| IPv4-only sockets | no change |
+
+**Fresh videos, never queried before — 20 of them, `ANDROID_VR`, no auth:**
+
+```
+jfKfPfyJRdk UNPLAYABLE     aqz-KE-bpKQ LOGIN_REQUIRED   OPf0YbXqDm0 UNPLAYABLE
+5qap5aO4i9A LOGIN_REQUIRED y6120QOlsfU LOGIN_REQUIRED   fJ9rUzIMcZQ LOGIN_REQUIRED
+DWcJFNfaw9c LOGIN_REQUIRED XqZsoesa55w UNPLAYABLE       60ItHLz5WEA LOGIN_REQUIRED
+21X5lGlDOfg UNPLAYABLE     ZbZSe6N_BXs UNPLAYABLE       pRpeEdMmmQ0 UNPLAYABLE
+                           ktvTqknDobU UNPLAYABLE       YQHsXMglC9A LOGIN_REQUIRED
+                           CevxZvSJLk8 UNPLAYABLE       3JZ_D3ELwOQ LOGIN_REQUIRED
+                           e-ORhEE9VVg LOGIN_REQUIRED
+                           SlPhMPnQ58k UNPLAYABLE
+                           hT_nvWreIhg UNPLAYABLE
+                           RgKAFK5djSk LOGIN_REQUIRED
+```
+
+**0 of 20 worked.**
+
+And the same video, five times in a row: `OK`, `OK`, `OK`, `OK`, `OK`.
+
+So exactly one video yields formats, it yields them every single time, and no
+fresh video does. That is a warm cached player response for a single
+heavily-queried video, not availability. Guest playback does not work.
+
+The practical conclusion is that guest playback is unavailable, and
 an authenticated session is required.
