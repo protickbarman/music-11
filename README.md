@@ -5,7 +5,9 @@ with Jetpack Compose and Material 3.
 
 Search and browsing work without signing in. Audio playback does not: the InnerTube
 player endpoint gates unauthenticated callers, and that is measured and documented
-below rather than worked around.
+below rather than worked around. How the player works end to end — request,
+attestation, signed URLs, SABR/UMP, ABR policy — is in
+[`YOUTUBE-PLAYER-RESEARCH.md`](YOUTUBE-PLAYER-RESEARCH.md).
 
 ```
 XroTune/

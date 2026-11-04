@@ -3,6 +3,8 @@
 ## Layout
 - `XroTune/` — Android app (`com.xrotune.app`), Kotlin + Jetpack Compose + Material 3.
 - `XroTune/preview/index.html` — static visual preview of the app screens.
+- `YOUTUBE-PLAYER-RESEARCH.md` — how the player works end to end: InnerTube
+  request/response, attestation challenge, signed URLs, SABR/UMP, ABR policy.
 - `ANALYSIS-youtube-guest.md` — decompiled evidence for how YouTube gates guests.
 - `youtube-apk/`, `ytmusic-apk/`, `ytmusic-mirror/` — local APK analysis, git-ignored.
 
