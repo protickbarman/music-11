@@ -47,7 +47,16 @@ echo "sdk.dir=/opt/android-sdk" > local.properties
 
 Output: `app/build/outputs/apk/debug/app-debug.apk` (minSdk 26, targetSdk 35).
 
-A prebuilt debug APK is committed at `XroTune/preview/XroTune-1.0.0-debug.apk`.
+A prebuilt debug APK is attached to the
+[`xrotune-v1.0.0` release](https://github.com/xpro-004/music/releases/tag/xrotune-v1.0.0):
+
+```
+https://github.com/xpro-004/music/releases/download/xrotune-v1.0.0/XroTune-1.0.0-debug.apk
+```
+
+It is also committed at `XroTune/preview/XroTune-1.0.0-debug.apk`.
+Debug-signed, so the phone must allow installs from unknown sources.
+MD5 `dba5339212cf09e228cdeba0b9113324`.
 
 ## Preview
 
