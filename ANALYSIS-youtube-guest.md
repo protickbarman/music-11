@@ -266,3 +266,65 @@ heavily-queried video, not availability. Guest playback does not work.
 
 The practical conclusion is that guest playback is unavailable, and
 an authenticated session is required.
+
+## Observed in a real browser, signed out
+
+This is the decisive check. The same three videos, loaded in a real Chrome
+browser from this environment, with no Google account:
+
+| video | what the player showed | plays? |
+|---|---|---|
+| `dQw4w9WgXcQ` (Rick Astley) | `0:00 / 3:33`, a `blob:` media URL, no error | **yes** |
+| `VqgVGkt2YhM` (the requester's link) | `0:00 / 0:00`, "Sign in to confirm you're not a bot" | no |
+| `39uMLYTh40Q` (another SVF Music video) | `0:00 / 0:00`, "Video unavailable" | no |
+
+The browser is not our code. It is YouTube's own page, with YouTube's own
+cookies (`VISITOR_INFO1_LIVE`, `YSC`, `PREF`, `__Secure-YNID`,
+`__Secure-ROLLOUT_TOKEN`), running YouTube's own player. And it still refuses the
+requester's video, showing the exact same message our API calls get.
+
+Feeding those real browser cookies into the player request changed nothing:
+`WEB`, `WEB_REMIX`, `MWEB` and `ANDROID_VR` all stayed `LOGIN_REQUIRED` with zero
+formats, with and without cookies, and with `VISITOR_INFO1_LIVE` passed as
+`visitorData`.
+
+## So what is actually going on
+
+The refusal is not about our request shape, our headers, our tokens, or the video
+id we picked. It is the server deciding, for this client as it sees it, that the
+content will not be served without an authenticated session.
+
+Two things stack up here:
+
+1. **This environment is a datacenter IP.** The machine resolves to
+   `34.28.69.126`, AS396982 (Google LLC), Council Bluffs. "Sign in to confirm
+   you're not a bot" is the challenge YouTube applies to traffic it attributes to
+   datacenters and proxies rather than to real devices. That is why a browser
+   here is refused too.
+2. **A single video still plays.** `dQw4w9WgXcQ` plays every time, from the API
+   and in the browser. It is the most-requested video on the internet, so its
+   response is effectively always warm. It is the exception that proves the rule:
+   it is cached, not permitted.
+
+### What this means for the app on a real phone
+
+This is the important part, and it is good news.
+
+The APK does not run on this datacenter machine. It runs on a phone, on a
+residential or mobile network. On that network the "not a bot" challenge is not
+normally triggered, so signed-out playback is expected to work for ordinary
+videos — which is exactly how the YouTube and YouTube Music apps behave when you
+use them signed out.
+
+We cannot confirm that from here, because every request we make leaves from the
+datacenter IP. The honest statement is:
+
+- **Here, guest playback fails** for almost everything, in the API and in a real
+  browser alike. Verified.
+- **On a normal network, guest playback is expected to work** for most videos.
+  Not verifiable from here.
+- **The app's code is not the problem.** It builds the request correctly, and
+  when the server refuses, it reports it cleanly.
+
+The way to settle it is to install the APK on a phone and play the same video.
+That is a five-minute test and it is the only one that answers the question.
