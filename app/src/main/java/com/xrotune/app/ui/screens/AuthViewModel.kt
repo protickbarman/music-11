@@ -61,6 +61,7 @@ class AuthViewModel(
 
     fun signOut() {
         viewModelScope.launch {
+            authManager.signOut()
             sessionStore.clear()
             repository.authHeader = null
             _state.value = AuthUiState(restoring = false)
@@ -68,8 +69,8 @@ class AuthViewModel(
     }
 
     private fun applyAccount(account: UserAccount) {
-        // The Google ID token is what the server uses to scope data to the user.
-        account.idToken?.let { repository.authHeader = "Bearer $it" }
+        // User account details for Google Sign-In and cloud sync.
+        // Google OpenID tokens are not YouTube OAuth tokens, so repository.authHeader is not set here.
         _state.value = _state.value.copy(account = account)
     }
 }

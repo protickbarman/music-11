@@ -38,6 +38,26 @@ class InnerTubeClient {
         userAgent: String = ApiConfig.USER_AGENT,
         origin: String = "https://music.youtube.com",
     ): JSONObject = withContext(Dispatchers.IO) {
+        try {
+            executePost(endpoint, body, extraHeaders, baseUrl, userAgent, origin)
+        } catch (e: InnerTubeException) {
+            if (e.httpStatus == 401 && extraHeaders.isNotEmpty()) {
+                // If extra headers (e.g. expired or incompatible auth) caused 401, retry as public guest
+                executePost(endpoint, body, emptyMap(), baseUrl, userAgent, origin)
+            } else {
+                throw e
+            }
+        }
+    }
+
+    private fun executePost(
+        endpoint: String,
+        body: JSONObject,
+        extraHeaders: Map<String, String>,
+        baseUrl: String,
+        userAgent: String,
+        origin: String,
+    ): JSONObject {
         val url = baseUrl + endpoint + "?key=" + ApiConfig.API_KEY + "&prettyPrint=false"
         val request = Request.Builder()
             .url(url)
@@ -70,7 +90,7 @@ class InnerTubeClient {
                     ?.optString("visitorData")
                     ?.takeIf { it.isNotBlank() }
                     ?.let { visitorData = it }
-                json
+                return json
             }
         } catch (e: InnerTubeException) {
             throw e

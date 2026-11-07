@@ -32,16 +32,22 @@ class MusicRepository(
     private fun context(): JSONObject = ApiConfig.clientContext(client.visitorData)
 
     /**
-     * The signed-in home feed is personalised. For guests it returns only
-     * browse-only rows (albums, artists, podcasts), so `FEmusic_explore` is
-     * used instead — it yields playable tracks and videos.
+     * Always load FEmusic_explore to yield playable music tracks, trending charts,
+     * and videos across all guest and signed-in sessions without requiring YouTube cookies.
      */
     suspend fun getHome(): List<MusicSection> = withContext(Dispatchers.Default) {
-        val browseId = if (authHeader != null) "FEmusic_home" else "FEmusic_explore"
         val body = JSONObject()
             .put("context", context())
-            .put("browseId", browseId)
-        val response = client.post("browse", body, headers())
+            .put("browseId", "FEmusic_explore")
+        val response = try {
+            client.post("browse", body, headers())
+        } catch (e: InnerTubeException) {
+            if (e.httpStatus == 401 && headers().isNotEmpty()) {
+                client.post("browse", body, emptyMap())
+            } else {
+                throw e
+            }
+        }
         ResponseParser.parseSections(response)
     }
 
@@ -49,8 +55,14 @@ class MusicRepository(
         val body = JSONObject()
             .put("context", context())
             .put("browseId", "FEmusic_library_landing")
-        val response = client.post("browse", body, headers())
-        ResponseParser.parseSections(response)
+        val response = runCatching {
+            client.post("browse", body, headers())
+        }.getOrNull()
+        if (response != null) {
+            ResponseParser.parseSections(response)
+        } else {
+            emptyList()
+        }
     }
 
     suspend fun search(

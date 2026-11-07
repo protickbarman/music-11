@@ -12,6 +12,9 @@ class XroTuneApp : Application() {
 
     val repository: MusicRepository by lazy { MusicRepository() }
     val sessionStore: SessionStore by lazy { SessionStore(this) }
+    val firestoreRepository: com.xrotune.app.data.repo.FirestoreRepository by lazy {
+        com.xrotune.app.data.repo.FirestoreRepository(this)
+    }
 
     override fun onCreate() {
         super.onCreate()

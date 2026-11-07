@@ -12,6 +12,8 @@ import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.padding
 import androidx.compose.material.icons.Icons
+import androidx.compose.material.icons.automirrored.filled.Logout
+import androidx.compose.material.icons.filled.AutoAwesome
 import androidx.compose.material.icons.filled.Home
 import androidx.compose.material.icons.filled.LibraryMusic
 import androidx.compose.material.icons.filled.Search
@@ -86,7 +88,9 @@ class MainActivity : ComponentActivity() {
                 modelClass.isAssignableFrom(SearchViewModel::class.java) ->
                     SearchViewModel(repo) as T
                 modelClass.isAssignableFrom(LibraryViewModel::class.java) ->
-                    LibraryViewModel(repo) as T
+                    LibraryViewModel(repo, app.firestoreRepository) as T
+                modelClass.isAssignableFrom(com.xrotune.app.ui.screens.AiDjViewModel::class.java) ->
+                    com.xrotune.app.ui.screens.AiDjViewModel(app.firestoreRepository) as T
                 modelClass.isAssignableFrom(PlayerViewModel::class.java) ->
                     PlayerViewModel(repo) as T
                 else -> throw IllegalArgumentException("Unknown ViewModel: ${modelClass.name}")
@@ -96,6 +100,7 @@ class MainActivity : ComponentActivity() {
 
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
+        com.xrotune.app.util.configureAppCheck(this, intent)
         enableEdgeToEdge()
         requestNotificationPermissionIfNeeded()
 
@@ -179,9 +184,29 @@ private fun MainScaffold(
         playerState.error?.let { snackbarHostState.showSnackbar(it) }
     }
 
+    val authViewModel: AuthViewModel = viewModel(factory = factory)
+    val authState by authViewModel.state.collectAsState()
+    val app = context.applicationContext as XroTuneApp
+
+    var likedSongIds by remember { mutableStateOf<Set<String>>(emptySet()) }
+    LaunchedEffect(authState.account) {
+        if (com.google.firebase.auth.FirebaseAuth.getInstance().currentUser != null) {
+            runCatching {
+                app.firestoreRepository.observeLikedSongs().collect { songs ->
+                    likedSongIds = songs.map { it.id }.toSet()
+                }
+            }
+        } else {
+            likedSongIds = emptySet()
+        }
+    }
+
+    val isCurrentTrackLiked = currentTrack?.let { likedSongIds.contains(it.videoId) } ?: false
+
     val tabs = listOf(
         TabItem("home", "Home", Icons.Filled.Home),
         TabItem("search", "Search", Icons.Filled.Search),
+        TabItem("aidj", "AI DJ", Icons.Filled.AutoAwesome),
         TabItem("library", "Library", Icons.Filled.LibraryMusic),
     )
 
@@ -232,6 +257,11 @@ private fun MainScaffold(
                     actions = {
                         IconButton(onClick = { navController.navigate("search") }) {
                             Icon(Icons.Filled.Search, contentDescription = "Search")
+                        }
+                        if (authState.account != null) {
+                            IconButton(onClick = { authViewModel.signOut() }) {
+                                Icon(Icons.AutoMirrored.Filled.Logout, contentDescription = "Sign out")
+                            }
                         }
                     },
                     colors = TopAppBarDefaults.topAppBarColors(
@@ -287,6 +317,15 @@ private fun MainScaffold(
                 val vm: SearchViewModel = viewModel(factory = factory)
                 SearchScreen(vm, onTrackClick)
             }
+            composable("aidj") {
+                val vm: com.xrotune.app.ui.screens.AiDjViewModel = viewModel(factory = factory)
+                com.xrotune.app.ui.screens.AiDjScreen(
+                    viewModel = vm,
+                    onSongSearch = { query ->
+                        navController.navigate("search")
+                    },
+                )
+            }
             composable("library") {
                 val vm: LibraryViewModel = viewModel(factory = factory)
                 LibraryScreen(vm, onTrackClick)
@@ -301,9 +340,32 @@ private fun MainScaffold(
                     error = playerState.error,
                     positionMs = positionMs,
                     durationMs = durationMs,
+                    isLiked = isCurrentTrackLiked,
                     onBack = { navController.popBackStack() },
                     onToggle = { playback.togglePlayPause() },
                     onSeek = { playback.seekTo(it); positionMs = it },
+                    onLikeToggle = {
+                        val track = currentTrack ?: return@PlayerScreen
+                        scope.launch {
+                            if (com.google.firebase.auth.FirebaseAuth.getInstance().currentUser == null) {
+                                snackbarHostState.showSnackbar("Please sign in to save favorites")
+                                return@launch
+                            }
+                            if (isCurrentTrackLiked) {
+                                app.firestoreRepository.unlikeSong(track.videoId)
+                                snackbarHostState.showSnackbar("Removed from Liked Songs")
+                            } else {
+                                app.firestoreRepository.likeSong(
+                                    songId = track.videoId,
+                                    title = track.title,
+                                    artist = track.subtitle ?: "",
+                                    thumbnailUrl = track.thumbnailUrl,
+                                    duration = track.durationText,
+                                )
+                                snackbarHostState.showSnackbar("Added to Liked Songs")
+                            }
+                        }
+                    },
                 )
             }
         }

@@ -1,0 +1,6 @@
+{
+  "name": "XroTune",
+  "description": "Stream and discover music powered by YouTube Music / InnerTube",
+  "requestFramePermissions": [],
+  "majorCapabilities": ["MAJOR_CAPABILITY_SERVER_SIDE_GEMINI_API"]
+}

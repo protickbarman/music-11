@@ -1,0 +1,83 @@
+{
+  "entities": {
+    "UserProfile": {
+      "title": "UserProfile",
+      "description": "User profile information stored upon authentication",
+      "type": "object",
+      "properties": {
+        "userId": { "type": "string", "description": "The unique Firebase Auth UID" },
+        "displayName": { "type": "string", "description": "User display name" },
+        "email": { "type": "string", "description": "User email address" },
+        "photoUrl": { "type": "string", "description": "User avatar URL" },
+        "createdAt": { "type": "string", "format": "date-time", "description": "Creation timestamp via serverTimestamp" },
+        "updatedAt": { "type": "string", "format": "date-time", "description": "Update timestamp via serverTimestamp" }
+      },
+      "required": ["userId", "displayName", "email", "createdAt"]
+    },
+    "LikedSong": {
+      "title": "LikedSong",
+      "description": "Tracks saved or liked by the user",
+      "type": "object",
+      "properties": {
+        "id": { "type": "string", "description": "Track videoId" },
+        "userId": { "type": "string", "description": "Owner user UID" },
+        "title": { "type": "string", "description": "Track title" },
+        "artist": { "type": "string", "description": "Artist or channel name" },
+        "thumbnailUrl": { "type": "string", "description": "Track artwork URL" },
+        "duration": { "type": "string", "description": "Track duration string" },
+        "createdAt": { "type": "string", "format": "date-time", "description": "When the track was liked via serverTimestamp" }
+      },
+      "required": ["id", "userId", "title", "artist", "createdAt"]
+    },
+    "Playlist": {
+      "title": "Playlist",
+      "description": "User-created playlist",
+      "type": "object",
+      "properties": {
+        "id": { "type": "string", "description": "Unique playlist document ID" },
+        "userId": { "type": "string", "description": "Owner user UID" },
+        "title": { "type": "string", "description": "Playlist title" },
+        "description": { "type": "string", "description": "Optional description" },
+        "trackCount": { "type": "integer", "description": "Number of tracks in playlist" },
+        "createdAt": { "type": "string", "format": "date-time", "description": "Creation timestamp" },
+        "updatedAt": { "type": "string", "format": "date-time", "description": "Update timestamp" }
+      },
+      "required": ["id", "userId", "title", "trackCount", "createdAt"]
+    },
+    "AiRecommendation": {
+      "title": "AiRecommendation",
+      "description": "AI-generated music recommendations and playlist suggestions",
+      "type": "object",
+      "properties": {
+        "id": { "type": "string", "description": "Unique recommendation document ID" },
+        "userId": { "type": "string", "description": "Owner user UID" },
+        "prompt": { "type": "string", "description": "The prompt or mood queried" },
+        "mood": { "type": "string", "description": "Music mood category" },
+        "suggestions": {
+          "type": "array",
+          "description": "List of recommended track or artist names"
+        },
+        "createdAt": { "type": "string", "format": "date-time", "description": "Generation timestamp" }
+      },
+      "required": ["id", "userId", "prompt", "createdAt"]
+    }
+  },
+  "firestore": {
+    "/users/{userId}": {
+      "schema": { "$ref": "#/entities/UserProfile" },
+      "description": "Stores user profile data"
+    },
+    "/users/{userId}/liked_songs/{songId}": {
+      "schema": { "$ref": "#/entities/LikedSong" },
+      "description": "Tracks saved into user library"
+    },
+    "/users/{userId}/playlists/{playlistId}": {
+      "schema": { "$ref": "#/entities/Playlist" },
+      "description": "Custom playlists created by user"
+    },
+    "/users/{userId}/ai_recommendations/{recId}": {
+      "schema": { "$ref": "#/entities/AiRecommendation" },
+      "description": "History of AI-generated music recommendations"
+    }
+  }
+}

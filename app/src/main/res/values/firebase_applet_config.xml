@@ -1,0 +1,5 @@
+<?xml version="1.0" encoding="utf-8" standalone="no"?>
+<resources>
+    <string name="firestore_database_id" translatable="false">ai-studio-android-music11-f2445e6f-d473-4920-84ba-d2104aa5f41b</string>
+    <string name="recaptcha_site_key" translatable="false">6LfRVBAuAAAAACaKRl87UF86ClgIuYB-KSBTDTaD</string>
+</resources>

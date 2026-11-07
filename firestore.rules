@@ -1,0 +1,151 @@
+rules_version = '2';
+
+service cloud.firestore {
+  match /databases/{database}/documents {
+
+    // 1. Global Catch-All Deny
+    match /{document=**} {
+      allow read, write: if false;
+    }
+
+    // Helper functions
+    function isSignedIn() {
+      return request.auth != null;
+    }
+
+    function isOwner(userId) {
+      return isSignedIn() && request.auth.uid == userId;
+    }
+
+    function incoming() {
+      return request.resource.data;
+    }
+
+    function existing() {
+      return resource.data;
+    }
+
+    function isValidId(id) {
+      return id is string && id.size() > 0 && id.size() <= 128 && id.matches('^[a-zA-Z0-9_\\-]+$');
+    }
+
+    function isValidUserProfile(data) {
+      return data.userId is string && data.userId.size() > 0 && data.userId.size() <= 128 &&
+             data.displayName is string && data.displayName.size() > 0 && data.displayName.size() <= 100 &&
+             data.email is string && data.email.size() > 0 && data.email.size() <= 200 &&
+             (!('photoUrl' in data) || data.photoUrl == null || (data.photoUrl is string && data.photoUrl.size() <= 1000));
+    }
+
+    function isValidLikedSong(data) {
+      return data.id is string && data.id.size() > 0 && data.id.size() <= 128 &&
+             data.userId is string && data.userId.size() > 0 && data.userId.size() <= 128 &&
+             data.title is string && data.title.size() > 0 && data.title.size() <= 300 &&
+             data.artist is string && data.artist.size() > 0 && data.artist.size() <= 300 &&
+             (!('thumbnailUrl' in data) || data.thumbnailUrl == null || (data.thumbnailUrl is string && data.thumbnailUrl.size() <= 1000)) &&
+             (!('duration' in data) || data.duration == null || (data.duration is string && data.duration.size() <= 30));
+    }
+
+    function isValidPlaylist(data) {
+      return data.id is string && data.id.size() > 0 && data.id.size() <= 128 &&
+             data.userId is string && data.userId.size() > 0 && data.userId.size() <= 128 &&
+             data.title is string && data.title.size() > 0 && data.title.size() <= 150 &&
+             (!('description' in data) || data.description == null || (data.description is string && data.description.size() <= 500)) &&
+             data.trackCount is int && data.trackCount >= 0;
+    }
+
+    function isValidAiRecommendation(data) {
+      return data.id is string && data.id.size() > 0 && data.id.size() <= 128 &&
+             data.userId is string && data.userId.size() > 0 && data.userId.size() <= 128 &&
+             data.prompt is string && data.prompt.size() > 0 && data.prompt.size() <= 1000 &&
+             (!('mood' in data) || data.mood == null || (data.mood is string && data.mood.size() <= 100)) &&
+             (!('suggestions' in data) || (data.suggestions is list && data.suggestions.size() <= 50 && (data.suggestions.size() == 0 || data.suggestions[0] is string)));
+    }
+
+    // User Profile
+    match /users/{userId} {
+      allow get: if isOwner(userId);
+      allow list: if false;
+
+      allow create: if isOwner(userId) &&
+                       incoming().userId == request.auth.uid &&
+                       incoming().createdAt is timestamp &&
+                       incoming().createdAt <= request.time &&
+                       isValidUserProfile(incoming()) &&
+                       incoming().keys().hasAll(['userId', 'displayName', 'email', 'createdAt']) &&
+                       incoming().keys().hasOnly(['userId', 'displayName', 'email', 'photoUrl', 'createdAt', 'updatedAt']);
+
+      allow update: if isOwner(userId) &&
+                       incoming().userId == existing().userId &&
+                       incoming().createdAt == existing().createdAt &&
+                       (!('updatedAt' in incoming()) || (incoming().updatedAt is timestamp && incoming().updatedAt <= request.time)) &&
+                       isValidUserProfile(incoming()) &&
+                       incoming().diff(existing()).affectedKeys().hasOnly(['displayName', 'photoUrl', 'updatedAt']);
+
+      allow delete: if isOwner(userId);
+
+      // Liked songs subcollection
+      match /liked_songs/{songId} {
+        allow get, list: if isOwner(userId);
+
+        allow create: if isOwner(userId) &&
+                         isValidId(songId) &&
+                         incoming().userId == request.auth.uid &&
+                         incoming().id == songId &&
+                         incoming().createdAt is timestamp &&
+                         incoming().createdAt <= request.time &&
+                         isValidLikedSong(incoming()) &&
+                         incoming().keys().hasAll(['id', 'userId', 'title', 'artist', 'createdAt']) &&
+                         incoming().keys().hasOnly(['id', 'userId', 'title', 'artist', 'thumbnailUrl', 'duration', 'createdAt']);
+
+        allow update: if false; // Liked songs are immutable records
+
+        allow delete: if isOwner(userId);
+      }
+
+      // Playlists subcollection
+      match /playlists/{playlistId} {
+        allow get, list: if isOwner(userId);
+
+        allow create: if isOwner(userId) &&
+                         isValidId(playlistId) &&
+                         incoming().userId == request.auth.uid &&
+                         incoming().id == playlistId &&
+                         incoming().createdAt is timestamp &&
+                         incoming().createdAt <= request.time &&
+                         isValidPlaylist(incoming()) &&
+                         incoming().keys().hasAll(['id', 'userId', 'title', 'trackCount', 'createdAt']) &&
+                         incoming().keys().hasOnly(['id', 'userId', 'title', 'description', 'trackCount', 'createdAt', 'updatedAt']);
+
+        allow update: if isOwner(userId) &&
+                         isValidId(playlistId) &&
+                         incoming().userId == existing().userId &&
+                         incoming().id == existing().id &&
+                         incoming().createdAt == existing().createdAt &&
+                         (!('updatedAt' in incoming()) || (incoming().updatedAt is timestamp && incoming().updatedAt <= request.time)) &&
+                         isValidPlaylist(incoming()) &&
+                         incoming().diff(existing()).affectedKeys().hasOnly(['title', 'description', 'trackCount', 'updatedAt']);
+
+        allow delete: if isOwner(userId);
+      }
+
+      // AI Recommendations subcollection
+      match /ai_recommendations/{recId} {
+        allow get, list: if isOwner(userId);
+
+        allow create: if isOwner(userId) &&
+                         isValidId(recId) &&
+                         incoming().userId == request.auth.uid &&
+                         incoming().id == recId &&
+                         incoming().createdAt is timestamp &&
+                         incoming().createdAt <= request.time &&
+                         isValidAiRecommendation(incoming()) &&
+                         incoming().keys().hasAll(['id', 'userId', 'prompt', 'createdAt']) &&
+                         incoming().keys().hasOnly(['id', 'userId', 'prompt', 'mood', 'suggestions', 'createdAt']);
+
+        allow update: if false;
+
+        allow delete: if isOwner(userId);
+      }
+    }
+  }
+}
