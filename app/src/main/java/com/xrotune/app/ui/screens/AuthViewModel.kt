@@ -15,6 +15,7 @@ import kotlinx.coroutines.launch
 
 data class AuthUiState(
     val account: UserAccount? = null,
+    val isGuest: Boolean = false,
     val restoring: Boolean = true,
     val signingIn: Boolean = false,
     val error: String? = null,
@@ -32,8 +33,9 @@ class AuthViewModel(
     init {
         viewModelScope.launch {
             val saved = sessionStore.account.first()
+            val guest = sessionStore.isGuest.first()
             saved?.let { applyAccount(it) }
-            _state.value = _state.value.copy(restoring = false)
+            _state.value = _state.value.copy(isGuest = guest, restoring = false)
         }
     }
 
@@ -56,7 +58,10 @@ class AuthViewModel(
     }
 
     fun continueAsGuest() {
-        _state.value = _state.value.copy(error = null)
+        viewModelScope.launch {
+            sessionStore.setGuestMode(true)
+            _state.value = _state.value.copy(isGuest = true, error = null)
+        }
     }
 
     fun signOut() {
@@ -64,13 +69,13 @@ class AuthViewModel(
             authManager.signOut()
             sessionStore.clear()
             repository.authHeader = null
-            _state.value = AuthUiState(restoring = false)
+            _state.value = AuthUiState(restoring = false, isGuest = true)
         }
     }
 
     private fun applyAccount(account: UserAccount) {
         // User account details for Google Sign-In and cloud sync.
         // Google OpenID tokens are not YouTube OAuth tokens, so repository.authHeader is not set here.
-        _state.value = _state.value.copy(account = account)
+        _state.value = _state.value.copy(account = account, isGuest = false)
     }
 }

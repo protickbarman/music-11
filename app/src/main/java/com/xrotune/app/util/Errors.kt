@@ -7,7 +7,11 @@ import java.io.IOException
 /** Maps exceptions to short, user-facing text. */
 fun Throwable.toUserMessage(): String = when (this) {
     is PlaybackUnavailableException ->
-        "This track can't be played right now (${status}). Google may require an extra verification step."
+        if (status == "LOGIN_REQUIRED") {
+            "YouTube requires bot verification for this specific video. Try another track or version."
+        } else {
+            "Playback restricted by YouTube ($status). Try another track or search."
+        }
     is InnerTubeException ->
         message ?: "The music service returned an unexpected response."
     is IOException ->

@@ -51,6 +51,14 @@ object ApiConfig {
             android = true,
         ),
         PlayerClient(
+            name = "ANDROID_KIDS",
+            version = "9.24.2",
+            userAgent = "com.google.android.apps.youtube.kids/9.24.2 (Linux; U; Android 12; en_US)",
+            origin = "https://www.youtube.com",
+            baseUrl = "https://www.youtube.com/youtubei/v1/",
+            android = true,
+        ),
+        PlayerClient(
             name = "ANDROID_MUSIC",
             version = "7.27.52",
             userAgent = "com.google.android.apps.youtube.music/7.27.52 " +

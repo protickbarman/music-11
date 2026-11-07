@@ -109,15 +109,13 @@ class MainActivity : ComponentActivity() {
                 val authViewModel: AuthViewModel = viewModel(factory = factory)
                 val authState by authViewModel.state.collectAsState()
 
-                var guest by remember { mutableStateOf(false) }
-
                 when {
                     authState.restoring -> com.xrotune.app.ui.components.LoadingBox()
-                    authState.account == null && !guest -> SignInScreen(
+                    authState.account == null && !authState.isGuest -> SignInScreen(
                         signingIn = authState.signingIn,
                         error = authState.error,
                         onSignIn = authViewModel::signIn,
-                        onSkip = { guest = true },
+                        onSkip = authViewModel::continueAsGuest,
                     )
                     else -> MainScaffold(factory = factory)
                 }
@@ -262,6 +260,10 @@ private fun MainScaffold(
                             IconButton(onClick = { authViewModel.signOut() }) {
                                 Icon(Icons.AutoMirrored.Filled.Logout, contentDescription = "Sign out")
                             }
+                        } else {
+                            androidx.compose.material3.TextButton(onClick = { authViewModel.signIn() }) {
+                                Text("Sign In", color = MaterialTheme.colorScheme.primary)
+                            }
                         }
                     },
                     colors = TopAppBarDefaults.topAppBarColors(
@@ -328,7 +330,12 @@ private fun MainScaffold(
             }
             composable("library") {
                 val vm: LibraryViewModel = viewModel(factory = factory)
-                LibraryScreen(vm, onTrackClick)
+                LibraryScreen(
+                    viewModel = vm,
+                    onTrackClick = onTrackClick,
+                    isSignedIn = authState.account != null,
+                    onSignIn = authViewModel::signIn,
+                )
             }
             composable("player") {
                 PlayerScreen(

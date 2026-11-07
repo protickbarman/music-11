@@ -152,7 +152,13 @@ object ResponseParser {
         }
 
         val audio = formats.filter {
-            it.optString("mimeType").startsWith("audio") && it.optString("url").isNotBlank()
+            (it.optString("mimeType").startsWith("audio") ||
+             it.optString("mimeType").contains("mp4a") ||
+             it.optString("mimeType").contains("opus") ||
+             it.has("audioQuality")) &&
+            it.optString("url").isNotBlank()
+        }.ifEmpty {
+            formats.filter { it.optString("url").isNotBlank() }
         }
         if (audio.isEmpty()) {
             throw PlaybackUnavailableException("ERROR", "No directly playable audio stream")
